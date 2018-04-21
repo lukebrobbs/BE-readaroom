@@ -72,7 +72,7 @@ functions:
     handler: handler.ReadVideoStream   
     timeout: 300
     events:   
-      - schedule: rate(1 minute)
+      - schedule: rate(100000 minutes)
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
