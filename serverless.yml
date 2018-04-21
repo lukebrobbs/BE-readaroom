@@ -64,10 +64,15 @@ functions:
       - stream:
           type: kinesis
           arn: arn:aws:kinesis:eu-west-1:015176863114:stream/AmazonRekognitionReadaroom
+  ReadS3Bucket:
+    handler: handler.ReadS3Bucket
+    events:
+      - s3: kinesisvideo
   ReadVideoStream:
     handler: handler.ReadVideoStream   
+    timeout: 300
     events:   
-      - schedule: rate(10000 minutes)
+      - schedule: rate(1 minute)
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events

@@ -21,9 +21,40 @@ exports.ProcessKinesisRecords = (event, context, callback) => {
   // Use this code if you don't use the http event with the LAMBDA-PROXY integration
   // callback(null, { message: 'Go Serverless v1.0! Your function executed successfully!', event });
 };
+exports.ReadS3Bucket = (event, context, callback) => {
+  const rekognition = new AWS.Rekognition();
+  const sns = new AWS.SNS();
+
+  const params = {
+    Video: { S3Object: { Bucket: "kinesisvideo", Name: "video-0" } },
+    FaceAttributes: "ALL",
+    NotificationChannel: {
+      SNSTopicArn: "arn:aws:sns:eu-west-1:015176863114:Rekognition",
+      RoleArn: "arn:aws:iam::015176863114:role/RekognitionKinesis"
+    }
+  };
+  rekognition.startFaceDetection(params, (err, data) => {
+    if (err) console.log(err);
+    console.log(data);
+    sns.getTopicAttributes(
+      { TopicArn: "arn:aws:sns:eu-west-1:015176863114:Rekognition" },
+      (err, data) => {
+        if (err) console.log(err);
+        else console.log(data);
+      }
+    );
+    // rekognition.getFaceDetection(data, (err, data) => {
+    //   if (err) console.log(err);
+    //   else if (data.JobStatus === "SUCCEEDED") {
+    //     console.log(data);
+    //   }
+    // });
+  });
+};
 exports.ReadVideoStream = (event, context, callback) => {
-  const kinesisVideoMedia = new AWS.KinesisVideoMedia();
+  // const kinesisVideoMedia = new AWS.KinesisVideoMedia({apiVersion: '2017-09-30'});
   const kinesisVideo = new AWS.KinesisVideo();
+
   const params = {
     StartSelector: { StartSelectorType: "NOW" },
     StreamARN:
@@ -35,12 +66,37 @@ exports.ReadVideoStream = (event, context, callback) => {
     StreamARN:
       "arn:aws:kinesisvideo:eu-west-1:015176863114:stream/readaroom/1524213524123"
   };
+
   kinesisVideo.getDataEndpoint(kinesisVidParams, (err, data) => {
-    console.log("data", data, "err", err);
-    console.log("err", err);
-    kinesisVideoMedia.getMedia(params, (err, data) => {
-      console.log("data", JSON.parse(data), "err", err);
-      console.log("data2", JSON.parse(data.Payload), "err2", err);
+    if (err) console.log(err);
+    var dep = data.DataEndpoint;
+    var ep = new AWS.Endpoint(dep);
+    // const kinesisVideoMedia = new AWS.KinesisVideoMedia({
+    //   endpoint: ep
+    // });
+    // console.log(`endpoint: ${kinesisVideoMedia.endpoint.hostname}`);
+    const kinesisVideoArchivedMedia = new AWS.KinesisVideoArchivedMedia({
+      endpoint: ep
     });
+    const listFragmentParams = {
+      StreamName: "readaroom",
+      FragmentSelector: {
+        FragmentSelectorType: "SERVER_TIMESTAMP",
+        TimestampRange: {
+          EndTimestamp: new Date(Date.now()),
+          StartTimestamp: new Date(Date.now()) - 5000
+        }
+      }
+    };
+    kinesisVideoArchivedMedia.listFragments(listFragmentParams, (err, data) => {
+      if (err) console.log(err);
+      else console.log("data", data);
+    });
+
+    // kinesisVideoMedia.getMedia(params, (err, data) => {
+    //   if (err) console.log(err);
+    //   console.log(data.Payload);
+    //   console.log(data);
+    // });
   });
 };
