@@ -1,19 +1,19 @@
-"use strict";
-const AWS = require("aws-sdk");
+'use strict';
+const AWS = require('aws-sdk');
 
 exports.ProcessKinesisRecords = (event, context, callback) => {
   const response = {
     statusCode: 200,
     body: JSON.stringify({
-      message: "Go Serverless v1.0! Your function executed successfully!",
+      message: 'Go Serverless v1.0! Your function executed successfully!',
       input: event
     })
   };
 
   const rawPayLoad = new Buffer(
     event.Records[0].kinesis.data,
-    "base64"
-  ).toString("ascii");
+    'base64'
+  ).toString('ascii');
   console.log(rawPayLoad);
 
   callback(null, response);
@@ -26,45 +26,53 @@ exports.ReadS3Bucket = (event, context, callback) => {
   const sns = new AWS.SNS();
 
   const params = {
-    Video: { S3Object: { Bucket: "kinesisvideo", Name: "video-0" } },
-    FaceAttributes: "ALL",
+    Video: { S3Object: { Bucket: 'kinesisvideo', Name: 'video-0' } },
+    FaceAttributes: 'ALL',
     NotificationChannel: {
-      SNSTopicArn: "arn:aws:sns:eu-west-1:015176863114:Rekognition",
-      RoleArn: "arn:aws:iam::015176863114:role/RekognitionKinesis"
+      SNSTopicArn: 'arn:aws:sns:eu-west-1:015176863114:Rekognition',
+      RoleArn: 'arn:aws:iam::015176863114:role/RekognitionKinesis'
     }
   };
-  rekognition.startFaceDetection(params, (err, data) => {
-    if (err) console.log(err);
-    console.log(data);
-    sns.getTopicAttributes(
-      { TopicArn: "arn:aws:sns:eu-west-1:015176863114:Rekognition" },
-      (err, data) => {
-        if (err) console.log(err);
-        else console.log(data);
-      }
-    );
-    // rekognition.getFaceDetection(data, (err, data) => {
-    //   if (err) console.log(err);
-    //   else if (data.JobStatus === "SUCCEEDED") {
-    //     console.log(data);
-    //   }
-    // });
-  });
+  const fdPromise = rekognition.startFaceDetection(params).promise();
+  fdPromise
+    .then(data => {
+      console.log(data);
+    })
+    .catch(err => {
+      console.log('err: ', err);
+    });
+  // rekognition.startFaceDetection(params, (err, data) => {
+  //   if (err) console.log(err);
+  //   console.log(data);
+  //   sns.getTopicAttributes(
+  //     { TopicArn: "arn:aws:sns:eu-west-1:015176863114:Rekognition" },
+  //     (err, data) => {
+  //       if (err) console.log(err);
+  //       else console.log(data);
+  //     }
+  //   );
+  // rekognition.getFaceDetection(data, (err, data) => {
+  //   if (err) console.log(err);
+  //   else if (data.JobStatus === "SUCCEEDED") {
+  //     console.log(data);
+  //   }
+  // });
+  // });
 };
 exports.ReadVideoStream = (event, context, callback) => {
   // const kinesisVideoMedia = new AWS.KinesisVideoMedia({apiVersion: '2017-09-30'});
   const kinesisVideo = new AWS.KinesisVideo();
 
   const params = {
-    StartSelector: { StartSelectorType: "NOW" },
+    StartSelector: { StartSelectorType: 'NOW' },
     StreamARN:
-      "arn:aws:kinesisvideo:eu-west-1:015176863114:stream/readaroom/1524213524123"
+      'arn:aws:kinesisvideo:eu-west-1:015176863114:stream/readaroom/1524213524123'
   };
 
   const kinesisVidParams = {
-    APIName: "GET_MEDIA",
+    APIName: 'GET_MEDIA',
     StreamARN:
-      "arn:aws:kinesisvideo:eu-west-1:015176863114:stream/readaroom/1524213524123"
+      'arn:aws:kinesisvideo:eu-west-1:015176863114:stream/readaroom/1524213524123'
   };
 
   kinesisVideo.getDataEndpoint(kinesisVidParams, (err, data) => {
@@ -79,9 +87,9 @@ exports.ReadVideoStream = (event, context, callback) => {
       endpoint: ep
     });
     const listFragmentParams = {
-      StreamName: "readaroom",
+      StreamName: 'readaroom',
       FragmentSelector: {
-        FragmentSelectorType: "SERVER_TIMESTAMP",
+        FragmentSelectorType: 'SERVER_TIMESTAMP',
         TimestampRange: {
           EndTimestamp: new Date(Date.now()),
           StartTimestamp: new Date(Date.now()) - 5000
@@ -90,7 +98,7 @@ exports.ReadVideoStream = (event, context, callback) => {
     };
     kinesisVideoArchivedMedia.listFragments(listFragmentParams, (err, data) => {
       if (err) console.log(err);
-      else console.log("data", data);
+      else console.log('data', data);
     });
 
     // kinesisVideoMedia.getMedia(params, (err, data) => {

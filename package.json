@@ -1,0 +1,25 @@
+{
+  "name": "BE-readaroom",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lukebrobbs/BE-readaroom.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lukebrobbs/BE-readaroom/issues"
+  },
+  "homepage": "https://github.com/lukebrobbs/BE-readaroom#readme",
+  "dependencies": {
+    "aws-cli": "0.0.2",
+    "aws-sdk": "^2.226.1",
+    "serverless": "^1.26.1"
+  }
+}
