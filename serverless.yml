@@ -68,12 +68,16 @@ functions:
     handler: handler.ReadS3Bucket
     events:
       - s3: kinesisvideo
+      - sns: arn:aws:sns:eu-west-1:015176863114:Rekognition
   ReadVideoStream:
     handler: handler.ReadVideoStream   
     timeout: 300
     events:   
       - schedule: rate(100000 minutes)
-
+  SNSTriggerListener:
+    handler: handler.SNSTriggerListener
+    events: 
+      - sns: arn:aws:sns:eu-west-1:015176863114:Rekognition
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
