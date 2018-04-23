@@ -1,5 +1,21 @@
 'use strict';
 const AWS = require('aws-sdk');
+const admin = require('firebase-admin');
+const { privateKey, authDomain, projectId, clientEmail } = process.env;
+
+admin.initializeApp({
+  credential: admin.credential.cert({
+    projectId,
+    clientEmail,
+    privateKey: `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----\n`.replace(
+      /\\n/g,
+      '\n'
+    )
+  }),
+  databaseURL: authDomain
+});
+
+const db = admin.firestore();
 
 exports.ProcessKinesisRecords = (event, context, callback) => {
   const response = {
@@ -43,84 +59,61 @@ exports.ReadS3Bucket = (event, context, callback) => {
         else console.log(data);
       }
     );
-
-    // rekognition
-    //   .getFaceDetection(data)
-    //   .on('success', (err, data) => {
-    //     if (err) console.log('err: ', err);
-    //     console.log(data);
-    //   })
-    //   .send();
-
-    // rekognition.getFaceDetection(data, (err, data) => {
-    //   if (err) console.log(err);
-    //   else if (data.JobStatus === "SUCCEEDED") {
-    //     console.log(data);
-    //   }
-    // });
   });
 };
 
 exports.SNSTriggerListener = (event, context, callback) => {
-  // console.log('unique: ', event.Records[0].Sns.Message);
   const message = event.Records[0].Sns.Message;
-  console.log('parsedV', JSON.parse(message));
   const parsedMessage = JSON.parse(message);
   const ourJobId = parsedMessage.JobId;
+
   const params = { JobId: ourJobId };
   const rekognition = new AWS.Rekognition();
+  // const dbref = db.collection('test').doc();
+
+  // dbref.update({ test: 'hello' });
+
   rekognition.getFaceDetection(params, (err, data) => {
     if (err) console.log(err);
     console.log(JSON.stringify(data));
   });
 };
 
-exports.ReadVideoStream = (event, context, callback) => {
-  // const kinesisVideoMedia = new AWS.KinesisVideoMedia({apiVersion: '2017-09-30'});
-  const kinesisVideo = new AWS.KinesisVideo();
+// exports.ReadVideoStream = (event, context, callback) => {
+//   const kinesisVideo = new AWS.KinesisVideo();
 
-  const params = {
-    StartSelector: { StartSelectorType: 'NOW' },
-    StreamARN:
-      'arn:aws:kinesisvideo:eu-west-1:015176863114:stream/readaroom/1524213524123'
-  };
+//   const params = {
+//     StartSelector: { StartSelectorType: 'NOW' },
+//     StreamARN:
+//       'arn:aws:kinesisvideo:eu-west-1:015176863114:stream/readaroom/1524213524123'
+//   };
 
-  const kinesisVidParams = {
-    APIName: 'GET_MEDIA',
-    StreamARN:
-      'arn:aws:kinesisvideo:eu-west-1:015176863114:stream/readaroom/1524213524123'
-  };
+//   const kinesisVidParams = {
+//     APIName: 'GET_MEDIA',
+//     StreamARN:
+//       'arn:aws:kinesisvideo:eu-west-1:015176863114:stream/readaroom/1524213524123'
+//   };
 
-  kinesisVideo.getDataEndpoint(kinesisVidParams, (err, data) => {
-    if (err) console.log(err);
-    var dep = data.DataEndpoint;
-    var ep = new AWS.Endpoint(dep);
-    // const kinesisVideoMedia = new AWS.KinesisVideoMedia({
-    //   endpoint: ep
-    // });
-    // console.log(`endpoint: ${kinesisVideoMedia.endpoint.hostname}`);
-    const kinesisVideoArchivedMedia = new AWS.KinesisVideoArchivedMedia({
-      endpoint: ep
-    });
-    const listFragmentParams = {
-      StreamName: 'readaroom',
-      FragmentSelector: {
-        FragmentSelectorType: 'SERVER_TIMESTAMP',
-        TimestampRange: {
-          EndTimestamp: new Date(Date.now()),
-          StartTimestamp: new Date(Date.now()) - 5000
-        }
-      }
-    };
-    kinesisVideoArchivedMedia.listFragments(listFragmentParams, (err, data) => {
-      if (err) console.log(err);
-      else console.log('data', data);
-    });
-
-    // kinesisVideoMedia.getMedia(params, (err, data) => {
-    //   if (err) console.log(err);
-    //   console.log(data.Payload);
-    //   console.log(data);
-    // });
-  });
-};
+// kinesisVideo.getDataEndpoint(kinesisVidParams, (err, data) => {
+//   if (err) console.log(err);
+//   var dep = data.DataEndpoint;
+//   var ep = new AWS.Endpoint(dep);
+//   const kinesisVideoArchivedMedia = new AWS.KinesisVideoArchivedMedia({
+//     endpoint: ep
+//   });
+//   const listFragmentParams = {
+//     StreamName: 'readaroom',
+//     FragmentSelector: {
+//       FragmentSelectorType: 'SERVER_TIMESTAMP',
+//       TimestampRange: {
+//         EndTimestamp: new Date(Date.now()),
+//         StartTimestamp: new Date(Date.now()) - 5000
+//       }
+//     }
+//   };
+//   kinesisVideoArchivedMedia.listFragments(listFragmentParams, (err, data) => {
+//     if (err) console.log(err);
+//     else console.log('data', data);
+//   });
+// });
+// };

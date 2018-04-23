@@ -23,6 +23,11 @@ provider:
     - "arn:aws:iam::015176863114:role/kinesis-rekognition-dev-eu-west-1-lambdaRole"
   runtime: nodejs6.10
   region: eu-west-1
+  environment:
+    authDomain: ${file(./config.json):authDomain}
+    projectId: ${file(./config.json):projectId}
+    clientEmail: ${file(./config.json):clientEmail}
+    privateKey: ${file(./config.json):privateKey}
 
 # you can overwrite defaults here
 #  stage: dev
