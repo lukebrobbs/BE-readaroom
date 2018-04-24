@@ -4,7 +4,8 @@
   "description": "",
   "main": "handler.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "npm rebuild grpc --target=8.1.0 --target_arch=x64 --target_platform=linux --target_libc=glibc"
   },
   "repository": {
     "type": "git",
@@ -21,6 +22,7 @@
     "aws-cli": "0.0.2",
     "aws-sdk": "^2.226.1",
     "firebase-admin": "^5.12.0",
+    "grpc": "^1.10.1",
     "serverless": "^1.26.1"
   }
 }

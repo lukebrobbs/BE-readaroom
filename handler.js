@@ -1,6 +1,6 @@
-'use strict';
-const AWS = require('aws-sdk');
-const admin = require('firebase-admin');
+"use strict";
+const AWS = require("aws-sdk");
+const admin = require("firebase-admin");
 const { privateKey, authDomain, projectId, clientEmail } = process.env;
 
 admin.initializeApp({
@@ -9,7 +9,7 @@ admin.initializeApp({
     clientEmail,
     privateKey: `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----\n`.replace(
       /\\n/g,
-      '\n'
+      "\n"
     )
   }),
   databaseURL: authDomain
@@ -21,15 +21,15 @@ exports.ProcessKinesisRecords = (event, context, callback) => {
   const response = {
     statusCode: 200,
     body: JSON.stringify({
-      message: 'Go Serverless v1.0! Your function executed successfully!',
+      message: "Go Serverless v1.0! Your function executed successfully!",
       input: event
     })
   };
 
   const rawPayLoad = new Buffer(
     event.Records[0].kinesis.data,
-    'base64'
-  ).toString('ascii');
+    "base64"
+  ).toString("ascii");
   console.log(rawPayLoad);
 
   callback(null, response);
@@ -42,40 +42,47 @@ exports.ReadS3Bucket = (event, context, callback) => {
   const sns = new AWS.SNS();
 
   const params = {
-    Video: { S3Object: { Bucket: 'kinesisvideo', Name: 'video-0' } },
-    FaceAttributes: 'ALL',
+    Video: { S3Object: { Bucket: "kinesisvideo", Name: "video-0" } },
+    FaceAttributes: "ALL",
+    JobTag: "readaroom",
     NotificationChannel: {
-      SNSTopicArn: 'arn:aws:sns:eu-west-1:015176863114:Rekognition',
-      RoleArn: 'arn:aws:iam::015176863114:role/RekognitionKinesis'
+      SNSTopicArn: "arn:aws:sns:eu-west-1:015176863114:Rekognition",
+      RoleArn: "arn:aws:iam::015176863114:role/RekognitionKinesis"
     }
   };
   rekognition.startFaceDetection(params, (err, data) => {
     if (err) console.log(err);
     console.log(data);
-    sns.getTopicAttributes(
-      { TopicArn: 'arn:aws:sns:eu-west-1:015176863114:Rekognition' },
-      (err, data) => {
-        if (err) console.log(err);
-        else console.log(data);
-      }
-    );
   });
+  callback(null, "Success");
 };
 
-exports.SNSTriggerListener = (event, context, callback) => {
+exports.SNSTriggerListener = (event, context) => {
+  console.log(JSON.stringify(event));
   const message = event.Records[0].Sns.Message;
   const parsedMessage = JSON.parse(message);
   const ourJobId = parsedMessage.JobId;
-
   const params = { JobId: ourJobId };
   const rekognition = new AWS.Rekognition();
-  // const dbref = db.collection('test').doc();
-
-  // dbref.update({ test: 'hello' });
+  const dbref = db.collection("readaroom").doc("currentData");
 
   rekognition.getFaceDetection(params, (err, data) => {
+    const reducedEmotionData = data.Faces.reduce((acc, curr) => {
+      acc.push({
+        emotions: curr.Face.Emotions,
+        smile: curr.Face.Smile.Confidence > 70 ? curr.Face.Smile.Value : null,
+        gender: curr.Face.Gender.Value,
+        ageGroup: (curr.Face.AgeRange.Low + curr.Face.AgeRange.High) / 2
+      });
+      return acc;
+    }, []);
+    const fireStoreData = {
+      timestamp: parsedMessage.Timestamp,
+      emotiondata: reducedEmotionData
+    };
     if (err) console.log(err);
     console.log(JSON.stringify(data));
+    dbref.set(fireStoreData);
   });
 };
 
